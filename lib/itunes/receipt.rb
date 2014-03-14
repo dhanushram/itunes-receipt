@@ -168,9 +168,9 @@ module Itunes
       instance_variables.each do |var|
         instance_var = instance_variable_get(var)
         if instance_var.kind_of? Receipt
-          hash[var.to_s.delete("@")] = instance_var.to_hash
+          hash[var.to_s.delete("@")] = instance_var.to_h
         elsif instance_var.kind_of? Array
-          hash[var.to_s.delete("@")] = instance_var.map { |ia| ia.kind_of?(Receipt)  ? ia.to_hash : ia }
+          hash[var.to_s.delete("@")] = instance_var.map { |ia| ia.kind_of?(Receipt)  ? ia.to_h : ia }
         else
           hash[var.to_s.delete("@")] = instance_variable_get(var)
         end
