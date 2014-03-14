@@ -59,7 +59,7 @@ module Itunes
       @bvrs = receipt_attributes[:bvrs]
       @download_id = receipt_attributes[:download_id]
       @expires_date = if receipt_attributes[:expires_date]
-        Time.at(receipt_attributes[:expires_date].to_i / 1000)
+        Time.parse receipt_attributes[:purchase_date].sub('Etc/GMT', 'GMT')
       end
       @in_app = if receipt_attributes[:in_app]
         receipt_attributes[:in_app].map { |ia| self.class.new(:receipt => ia) }
@@ -75,19 +75,19 @@ module Itunes
           latest_receipt_info.map { |ia| self.class.new(:receipt => ia) }
         else
           self.class.new(
-          :receipt        => attributes[:latest_receipt_info],
-          :latest_receipt => full_receipt_data,
-          :receipt_type   => :latest
+            :receipt        => attributes[:latest_receipt_info],
+            :latest_receipt => full_receipt_data,
+            :receipt_type   => :latest
           )
         end
       end
       @original = if receipt_attributes[:original_transaction_id] || receipt_attributes[:original_purchase_date]
         self.class.new(:receipt => {
-          :transaction_id      => receipt_attributes[:original_transaction_id],
-          :purchase_date       => receipt_attributes[:original_purchase_date],
-          :purchase_date_ms    => receipt_attributes[:original_purchase_date_ms],
-          :purchase_date_pst   => receipt_attributes[:original_purchase_date_pst],
-          :application_version => receipt_attributes[:original_application_version]
+                         :transaction_id      => receipt_attributes[:original_transaction_id],
+                         :purchase_date       => receipt_attributes[:original_purchase_date],
+                         :purchase_date_ms    => receipt_attributes[:original_purchase_date_ms],
+                         :purchase_date_pst   => receipt_attributes[:original_purchase_date_pst],
+                         :application_version => receipt_attributes[:original_application_version]
         })
       end
       @product_id = receipt_attributes[:product_id]
@@ -161,6 +161,21 @@ module Itunes
           raise e
         end
       end
+    end
+
+    def to_h
+      hash = {}
+      instance_variables.each do |var|
+        instance_var = instance_variable_get(var)
+        if instance_var.kind_of? Receipt
+          hash[var.to_s.delete("@")] = instance_var.to_hash
+        elsif instance_var.kind_of? Array
+          hash[var.to_s.delete("@")] = instance_var.map { |ia| ia.kind_of?(Receipt)  ? ia.to_hash : ia }
+        else
+          hash[var.to_s.delete("@")] = instance_variable_get(var)
+        end
+      end
+      hash
     end
 
     private
