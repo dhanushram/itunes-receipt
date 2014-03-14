@@ -70,11 +70,15 @@ module Itunes
       @itunes_env = attributes[:itunes_env] || Itunes.itunes_env
       @latest = if attributes[:latest_receipt_info]
         full_receipt_data = attributes[:latest_receipt]
-        self.class.new(
+        if latest_receipt_info.kind_of? Array
+          latest_receipt_info.map { |ia| self.class.new(:receipt => ia) }
+        else
+          self.class.new(
           :receipt        => attributes[:latest_receipt_info],
           :latest_receipt => full_receipt_data,
           :receipt_type   => :latest
-        )
+          )
+        end
       end
       @original = if receipt_attributes[:original_transaction_id] || receipt_attributes[:original_purchase_date]
         self.class.new(:receipt => {
