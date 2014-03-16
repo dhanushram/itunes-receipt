@@ -59,7 +59,12 @@ module Itunes
       @bvrs = receipt_attributes[:bvrs]
       @download_id = receipt_attributes[:download_id]
       @expires_date = if receipt_attributes[:expires_date]
-        Time.parse receipt_attributes[:purchase_date].sub('Etc/GMT', 'GMT')
+        if receipt_attributes[:expires_date].end_with? 'GMT'
+          Time.parse receipt_attributes[:expires_date].sub('Etc/GMT', 'GMT')
+        else
+          Time.at(receipt_attributes[:expires_date].to_i / 1000)
+        end
+
       end
       @in_app = if receipt_attributes[:in_app]
         receipt_attributes[:in_app].map { |ia| self.class.new(:receipt => ia) }
