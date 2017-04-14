@@ -29,8 +29,13 @@ module Itunes
       :bid,
       :bundle_id,
       :bvrs,
+      :cancellation_date,
+      :cancellation_date_ms,
+      :cancellation_date_pst,
       :download_id,
       :expires_date,
+      :expires_date_ms,
+      :expires_date_pst,
       :in_app,
       :is_trial_period,
       :itunes_env,
@@ -47,6 +52,7 @@ module Itunes
       :request_date_pst,
       :transaction_id,
       :version_external_identifier,
+      :web_order_line_item_id
     )
 
     def initialize(attributes = {})
@@ -57,31 +63,44 @@ module Itunes
       @bid = receipt_attributes[:bid]
       @bundle_id = receipt_attributes[:bundle_id]
       @bvrs = receipt_attributes[:bvrs]
+      @cancellation_date = if receipt_attributes[:cancellation_date]
+        Time.parse receipt_attributes[:cancellation_date].sub('Etc/GMT', 'GMT')
+      end
+      @cancellation_date_ms = if receipt_attributes[:cancellation_date_ms]
+        receipt_attributes[:cancellation_date_ms].to_i
+      end
+      @cancellation_date_pst = if receipt_attributes[:cancellation_date_pst]
+        Time.parse receipt_attributes[:cancellation_date_pst].sub('America/Los_Angeles', 'PST')
+      end
       @download_id = receipt_attributes[:download_id]
       @expires_date = if receipt_attributes[:expires_date]
-        if receipt_attributes[:expires_date].end_with? 'GMT'
-          Time.parse receipt_attributes[:expires_date].sub('Etc/GMT', 'GMT')
-        else
-          Time.at(receipt_attributes[:expires_date].to_i / 1000)
-        end
-
+        Time.parse receipt_attributes[:expires_date].sub('Etc/GMT', 'GMT')
+      end
+      @expires_date_ms = if receipt_attributes[:expires_date_ms]
+        receipt_attributes[:expires_date_ms].to_i
+      end
+      @expires_date_pst = if receipt_attributes[:expires_date_pst]
+        Time.parse receipt_attributes[:expires_date_pst].sub('America/Los_Angeles', 'PST')
       end
       @in_app = if receipt_attributes[:in_app]
         receipt_attributes[:in_app].map { |ia| self.class.new(:receipt => ia) }
       end
       @is_trial_period = if receipt_attributes[:is_trial_period]
-        receipt_attributes[:is_trial_period]
+        receipt_attributes[:is_trial_period] == "true"
       end
       @itunes_env = attributes[:itunes_env] || Itunes.itunes_env
-      @latest = if attributes[:latest_receipt_info]
-        full_receipt_data = attributes[:latest_receipt]
-        latest_receipt_info = attributes[:latest_receipt_info]
-        if latest_receipt_info.kind_of? Array
-          latest_receipt_info.map { |ia| self.class.new(:receipt => ia) }
-        else
+      @latest = case attributes[:latest_receipt_info]
+      when Hash
+        self.class.new(
+          :receipt        => attributes[:latest_receipt_info],
+          :latest_receipt => attributes[:latest_receipt],
+          :receipt_type   => :latest
+        )
+      when Array
+        attributes[:latest_receipt_info].collect do |latest_receipt_info|
           self.class.new(
-            :receipt        => attributes[:latest_receipt_info],
-            :latest_receipt => full_receipt_data,
+            :receipt        => latest_receipt_info,
+            :latest_receipt => attributes[:latest_receipt],
             :receipt_type   => :latest
           )
         end
@@ -122,22 +141,7 @@ module Itunes
       end
       @transaction_id = receipt_attributes[:transaction_id]
       @version_external_identifier = receipt_attributes[:version_external_identifier]
-    end
-
-    def as_json
-      {
-        :quantity                => @quantity,
-        :product_id              => @product_id,
-        :transaction_id          => @transaction_id,
-        :purchase_date           => @purchase_date,
-        :expires_date            => @expires_date,
-        :original_transaction_id => @original.try(:transaction_id),
-        :original_purchase_date  => @original.try(:purchase_date),
-        :is_trial_period         => @is_trial_period
-      }.tap do |hash|
-        hash[:application_version] = @application_version if @application_version.present?
-        hash[:bundle_id]           = @bundle_id           if @bundle_id.present?
-      end
+      @web_order_line_item_id = receipt_attributes[:web_order_line_item_id]
     end
 
     def application_receipt?
