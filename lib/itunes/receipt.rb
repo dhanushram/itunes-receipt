@@ -99,14 +99,16 @@ module Itunes
         self.class.new(
           :receipt        => attributes[:latest_receipt_info],
           :latest_receipt => attributes[:latest_receipt],
-          :receipt_type   => :latest
+          :receipt_type   => :latest,
+          :pending_renewal_info => attributes[:pending_renewal_info]
         )
       when Array
         attributes[:latest_receipt_info].collect do |latest_receipt_info|
           self.class.new(
             :receipt        => latest_receipt_info,
             :latest_receipt => attributes[:latest_receipt],
-            :receipt_type   => :latest
+            :receipt_type   => :latest,
+            :pending_renewal_info => attributes[:pending_renewal_info]
           )
         end
       end
