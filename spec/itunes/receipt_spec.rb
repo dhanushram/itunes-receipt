@@ -284,6 +284,8 @@ describe Itunes::Receipt do
         expect(receipt.subs_is_in_billing_retry_period).not_to be_nil
         expect(receipt.subs_pending_product_id).not_to be_nil
         expect(receipt.subs_auto_renew_status).not_to be_nil
+
+        expect(receipt.latest.first.subs_expiration_intent).not_to be_nil
       end
 
 
