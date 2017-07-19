@@ -272,5 +272,21 @@ describe Itunes::Receipt do
         end
       end
     end
+
+    describe '#july 2017 updates' do
+      before do
+        fake_json :valid_subscription_jul2017
+      end
+      it 'work' do
+        receipt = Itunes::Receipt.verify! 'valid_subscription_jul2017'
+        expect(receipt.subs_expiration_intent).not_to be_nil
+        expect(receipt.subs_auto_renew_product_id).not_to be_nil
+        expect(receipt.subs_is_in_billing_retry_period).not_to be_nil
+        expect(receipt.subs_pending_product_id).not_to be_nil
+        expect(receipt.subs_auto_renew_status).not_to be_nil
+      end
+
+
+    end
   end
 end

@@ -52,7 +52,12 @@ module Itunes
       :request_date_pst,
       :transaction_id,
       :version_external_identifier,
-      :web_order_line_item_id
+      :web_order_line_item_id,
+      :subs_expiration_intent,
+      :subs_auto_renew_product_id,
+      :subs_is_in_billing_retry_period,
+      :subs_pending_product_id,
+      :subs_auto_renew_status
     )
 
     def initialize(attributes = {})
@@ -142,6 +147,16 @@ module Itunes
       @transaction_id = receipt_attributes[:transaction_id]
       @version_external_identifier = receipt_attributes[:version_external_identifier]
       @web_order_line_item_id = receipt_attributes[:web_order_line_item_id]
+
+      #Picks the first object - might not support multiple subscriptions
+      if attributes[:pending_renewal_info] && attributes[:pending_renewal_info].first
+        pending_renewal_info = attributes.with_indifferent_access[:pending_renewal_info].first.with_indifferent_access
+        @subs_expiration_intent = pending_renewal_info[:expiration_intent]
+        @subs_auto_renew_product_id  = pending_renewal_info[:auto_renew_product_id]
+        @subs_is_in_billing_retry_period  = pending_renewal_info[:is_in_billing_retry_period]
+        @subs_pending_product_id = pending_renewal_info[:product_id]
+        @subs_auto_renew_status = pending_renewal_info[:auto_renew_status]
+      end
     end
 
     def as_json
